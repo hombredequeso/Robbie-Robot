@@ -1,0 +1,21 @@
+# Build Folders
+bin
+obj
+
+# Resharper
+_ReSharper.*
+
+# user
+*.csproj.user
+*.resharper.user
+*.resharper
+*.suo
+*.cache
+
+NDependOut
+
+
+# Don't include NuGet Packages
+packages/
+
+
