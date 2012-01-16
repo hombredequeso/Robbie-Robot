@@ -83,7 +83,7 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 			int populationSize = 10;
 			int[] indexSelectionCount = new int[populationSize * 3];
 			for (int i = 0; i < 10000; i++)
-				indexSelectionCount[RobotGeneticProblem.GetParentIndex(populationSize)]++;
+				indexSelectionCount[GenerateRobotsByPairing.GetParentIndex(populationSize)]++;
 			for (int c = 0; c < populationSize * 3; c++)
 			{
 				Debug.WriteLine("{0}: {1}", c, indexSelectionCount[c]);
@@ -95,14 +95,16 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 		public void Can_Run_Robots_Through_Genetic_Processor()
 		{
 			RobotGeneticProblem robotGeneticProblem = new RobotGeneticProblem();
-			GeneticAlgorithmProcessor<Robot> processor = new GeneticAlgorithmProcessor<Robot>(robotGeneticProblem);
+			// IChildGenerator<Robot> childGenerator = new GenerateRobotsByPairing();
+			IChildGenerator<Robot> childGenerator = new GenerateRobotsByMutation();
+			GeneticAlgorithmProcessor<Robot> processor = new GeneticAlgorithmProcessor<Robot>(robotGeneticProblem, childGenerator);
 
-			const int populationSize = 200;
+			const int populationSize = 300;
 			var population = processor.GetInitialPopulation(populationSize).ToArray();
 			var initialFitness = processor.CalculatePopulationFitness(population);
 			Debug.Print("Initial Fitness: {0}", initialFitness);
 
-			for (int i = 0; i < 2000; i++)
+			for (int i = 0; i < 500; i++)
 			{
 				population = processor.GetNextPopulation(population).ToArray();
 				var nextFitness = processor.CalculatePopulationFitness(population);
@@ -115,13 +117,6 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 
 	public class RobotGeneticProblem : IGeneticProblem<Robot>
 	{
-		private static Random _random;
-
-		static RobotGeneticProblem()
-		{
-			_random = new Random();
-		}
-
 		public IEnumerable<Robot> GenerateInitialPopulation(int populationSize)
 		{
 			return new Robot[populationSize]
@@ -152,14 +147,24 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 		{
 			return (double)item._scorer.Score / BoardCountToCalculateFitness;
 		}
+	}
 
-		public Tuple<Robot, Robot> GetParents(IEnumerable<Robot> orderedPopulation)
+	public class GenerateRobotsByPairing : GenerateByPairing<Robot>
+	{
+		private static readonly Random _random;
+
+		static GenerateRobotsByPairing()
+		{
+			_random = new Random();
+		}
+
+		protected override Tuple<Robot, Robot> GetParents(Robot[] orderedPopulation)
 		{
 			var populationSize = orderedPopulation.Count();
 			var index1 = GetParentIndex(populationSize);
 			var index2 = GetParentIndex(populationSize);
-			var parent1 = orderedPopulation.ElementAt(index1);
-			var parent2 = orderedPopulation.ElementAt(index2);
+			var parent1 = orderedPopulation[index1];
+			var parent2 = orderedPopulation[index2];
 			return new Tuple<Robot, Robot>(parent1, parent2);
 		}
 
@@ -168,17 +173,45 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 			//return (int)Math.Floor(max * Math.Sqrt(_random.NextDouble()));
 			//return  (int)Math.Floor(Math.Sqrt(_random.NextDouble() * 3)/Math.Sqrt(3)*max);
 			//return (int) Math.Floor(Math.Pow(3.0*_random.NextDouble(), 1.0/3)/Math.Pow(3.0, 1.0/3)*max);
-			return (int) Math.Floor(Math.Pow(4.0*_random.NextDouble(), 1.0/4)/Math.Pow(4.0, 1.0/4)*max);
+			return (int)Math.Floor(Math.Pow(4.0 * _random.NextDouble(), 1.0 / 4) / Math.Pow(4.0, 1.0 / 4) * max);
 		}
 
 
-
-		public Robot ProduceChild(Tuple<Robot, Robot> parents)
+		protected override Robot ProduceChild(Tuple<Robot, Robot> parents)
 		{
 			var strategy1 = parents.Item1._moveStrategy;
 			var strategy2 = parents.Item2._moveStrategy;
 			var newStrategy = StrategyGenerator.Merge(strategy1, strategy2);
 			return new Robot(newStrategy, new Scorer());
 		}
+	}
+
+	public class GenerateRobotsByMutation: IChildGenerator<Robot>
+	{
+		public Robot GenerateChild(Robot[] orderedPopulation)
+		{
+			var populationSize = orderedPopulation.Count();
+			var parent = orderedPopulation[GetParentIndex(populationSize)];
+			var newStrategy = new Dictionary<Situation, RobotAction>(parent._moveStrategy);
+			StrategyGenerator.RandomlyChange(0, 20, newStrategy);
+			return new Robot(newStrategy, new Scorer());
+		}
+
+		private static readonly Random _random;
+
+		static GenerateRobotsByMutation()
+		{
+			_random = new Random();
+		}
+
+
+		public static int GetParentIndex(int max)
+		{
+			//return (int)Math.Floor(max * Math.Sqrt(_random.NextDouble()));
+			//return  (int)Math.Floor(Math.Sqrt(_random.NextDouble() * 3)/Math.Sqrt(3)*max);
+			//return (int) Math.Floor(Math.Pow(3.0*_random.NextDouble(), 1.0/3)/Math.Pow(3.0, 1.0/3)*max);
+			return (int)Math.Floor(Math.Pow(4.0 * _random.NextDouble(), 1.0 / 4) / Math.Pow(4.0, 1.0 / 4) * max);
+		}
+
 	}
 }

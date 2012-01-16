@@ -62,10 +62,10 @@ namespace MRC.RobbieRobot.RobbieGame
 			switch (direction)
 			{
 				case Direction.North:
-					newX++;
+					newX--;
 					break;
 				case Direction.South:
-					newX--;
+					newX++;
 					break;
 				case Direction.East:
 					newY++;

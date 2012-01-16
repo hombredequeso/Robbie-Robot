@@ -6,15 +6,20 @@ namespace MRC.RobbieRobot.RobbieGame
 {
 	public static class StrategyGenerator
 	{
-		private static Random _random;
+		// private static Random _random;
 		private static int _maxAction;
 		private static int _contentCount;
 		private static int _actionCount;
 
+		[ThreadStatic]
+		private static Random _random;
+
+		private static Random random { get { return _random ?? (_random = new Random()); } }
+
 
 		static StrategyGenerator()
 		{
-			_random = new Random();
+			//_random = new Random();
 			_maxAction = Enum.GetValues(typeof (RobotAction)).Cast<RobotAction>().Max(x => (int) x);
 			_contentCount = Enum.GetValues(typeof (Situation.BoardContents)).GetLength(0);
 			_actionCount = Enum.GetValues(typeof(RobotAction)).GetLength(0);
@@ -35,7 +40,7 @@ namespace MRC.RobbieRobot.RobbieGame
 							foreach (var current in contentPossibilities)
 							{
 								Situation s = new Situation(current, north, south, east, west);
-								RobotAction a = (RobotAction)_random.Next(0, _maxAction + 1);
+								RobotAction a = (RobotAction)random.Next(0, _maxAction + 1);
 								strategy[s] = a;
 							}
 						}
@@ -49,7 +54,7 @@ namespace MRC.RobbieRobot.RobbieGame
 		{
 			var newStrategy = new Dictionary<Situation, RobotAction>();
 			var e = s1.GetEnumerator();
-			bool chooseE1 = _random.Next(0, 2) == 0;
+			bool chooseE1 = random.Next(0, 2) == 0;
 			while (e.MoveNext())
 			{
 				RobotAction e1 = e.Current.Value;
@@ -75,7 +80,7 @@ namespace MRC.RobbieRobot.RobbieGame
 
 		public static void RandomlyChange(int minPercentageOfSituation, int maxPercentageOfSituation, IDictionary<Situation, RobotAction> strategy)
 		{
-			int itemsToChange = (int)(strategy.Count() * _random.Next(minPercentageOfSituation, maxPercentageOfSituation+1) / 100.0);
+			int itemsToChange = (int)(strategy.Count() * random.Next(minPercentageOfSituation, maxPercentageOfSituation+1) / 100.0);
 			for (int i = 0; i < itemsToChange; i++)
 			{
 				Situation situationToRandonlyChange = GetRandomSituation();
@@ -87,16 +92,16 @@ namespace MRC.RobbieRobot.RobbieGame
 
 		public static RobotAction GetRandomAction()
 		{
-			return (RobotAction)_random.Next(0, _actionCount);
+			return (RobotAction)random.Next(0, _actionCount);
 		}
 
 		public static Situation GetRandomSituation()
 		{
-			return new Situation((Situation.BoardContents)_random.Next(0, _contentCount),
-				(Situation.BoardContents)_random.Next(0, _contentCount),
-				(Situation.BoardContents)_random.Next(0, _contentCount),
-				(Situation.BoardContents)_random.Next(0, _contentCount),
-				(Situation.BoardContents)_random.Next(0, _contentCount));
+			return new Situation((Situation.BoardContents)random.Next(0, _contentCount),
+				(Situation.BoardContents)random.Next(0, _contentCount),
+				(Situation.BoardContents)random.Next(0, _contentCount),
+				(Situation.BoardContents)random.Next(0, _contentCount),
+				(Situation.BoardContents)random.Next(0, _contentCount));
 		}
 
 

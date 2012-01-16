@@ -14,7 +14,8 @@ namespace MRC.RobbieRobotTests.Genetics
 		public void Processor_Can_Generate_Initial_Population()
 		{
 			IGeneticProblem<int> problem = new TestProblem();
-			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem);
+			IChildGenerator<int> childGenerator = new TestChildGenerator();
+			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem, childGenerator);
 			int populationSize = 100;
 			var initialPopulation = processor.GetInitialPopulation(populationSize);
 
@@ -25,7 +26,8 @@ namespace MRC.RobbieRobotTests.Genetics
 		public void Processor_Can_Generate_Next_Generation()
 		{
 			IGeneticProblem<int> problem = new TestProblem();
-			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem);
+			IChildGenerator<int> childGenerator = new TestChildGenerator();
+			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem, childGenerator);
 			int populationSize = 100;
 			var initialPopulation = processor.GetInitialPopulation(populationSize);
 			var nextGeneration = processor.GetNextPopulation(initialPopulation);
@@ -37,7 +39,8 @@ namespace MRC.RobbieRobotTests.Genetics
 		public void Processor_Can_Calculate_Population_Fitness()
 		{
 			IGeneticProblem<int> problem = new TestProblem();
-			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem);
+			IChildGenerator<int> childGenerator = new TestChildGenerator();
+			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem, childGenerator);
 			int populationSize = 100;
 			var initialPopulation = processor.GetInitialPopulation(populationSize);
 			var populationFitness = processor.CalculatePopulationFitness(initialPopulation);
@@ -48,29 +51,32 @@ namespace MRC.RobbieRobotTests.Genetics
 		public void Processor_Can_Improve_On_Each_Generation()
 		{
 			IGeneticProblem<int> problem = new TestProblem();
-			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem);
-			int populationSize = 100;
-			var initialPopulation = processor.GetInitialPopulation(populationSize);
+			IChildGenerator<int> childGenerator = new TestChildGenerator();
+			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem, childGenerator);
+			const int populationSize = 100;
+			var initialPopulation = processor.GetInitialPopulation(populationSize).ToArray();
 			var initialFitness = processor.CalculatePopulationFitness(initialPopulation);
 
 			var nextPopulation = processor.GetNextPopulation(initialPopulation);
 			var nextFitness = processor.CalculatePopulationFitness(nextPopulation);
-			Assert.IsTrue(nextFitness < initialFitness);
+			Assert.IsTrue(nextFitness < initialFitness, "Fitness moved from {0} to {1}", initialFitness, nextFitness);
 		}
 
 		[Test]
 		public void Processor_Can_Converge_Towards_A_Solution()
 		{
 			IGeneticProblem<int> problem = new TestProblem();
-			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem);
-			int populationSize = 10000;
-			var population = processor.GetInitialPopulation(populationSize);
+			IChildGenerator<int> childGenerator = new TestChildGenerator();
+			GeneticAlgorithmProcessor<int> processor = new GeneticAlgorithmProcessor<int>(problem, childGenerator);
+
+			const int populationSize = 10000;
+			int[] population = processor.GetInitialPopulation(populationSize).ToArray();
 			var initialFitness = processor.CalculatePopulationFitness(population);
 			Debug.Print("Initial Fitness: {0}", initialFitness);
 
 			for (int i = 0; i < 200; i++)
 			{
-				population = processor.GetNextPopulation(population);
+				population = processor.GetNextPopulation(population).ToArray();
 				var nextFitness = processor.CalculatePopulationFitness(population);
 				Debug.Print("Iteration {0}: {1}", i, nextFitness);
 				Assert.IsTrue(nextFitness < initialFitness);
@@ -80,12 +86,12 @@ namespace MRC.RobbieRobotTests.Genetics
 		[Test]
 		public void GetIndexFromPopulation_Is_Weighted_Towards_Zero()
 		{
-			int populationSize = 100;
+			const int populationSize = 100;
 			int[] count = new int[populationSize];
-			TestProblem problem = new TestProblem();
+			TestChildGenerator childGenerator = new TestChildGenerator();
 
 			for (int i = 0; i < 1000000; i++)
-				count[problem.GetParentIndex(populationSize)]++;
+				count[childGenerator.GetParentIndex(populationSize)]++;
 
 			for (int i = 0; i < 100; i++)
 				Debug.Print("{0} : {1}", i, count[i]);
@@ -136,23 +142,39 @@ namespace MRC.RobbieRobotTests.Genetics
 		{
 			return Math.Abs(item - 50);			
 		}
+	}
 
-		public Tuple<int, int> GetParents(IEnumerable<int> orderedPopulation)
+	public class TestChildGenerator: GenerateByPairing<int>
+	{
+		private static Random _random;
+
+		static TestChildGenerator()
+		{
+			_random = new Random();
+		}
+
+		protected override Tuple<int, int> GetParents(int[] orderedPopulation)
 		{
 			var populationSize = orderedPopulation.Count();
-			var parent1 = orderedPopulation.ElementAt(GetParentIndex(populationSize));
-			var parent2 = orderedPopulation.ElementAt(GetParentIndex(populationSize));
+
+			int parentIndex = GetParentIndex(populationSize);
+			var parent1 = orderedPopulation[parentIndex];
+
+			int index0 = GetParentIndex(populationSize);
+			var parent2 = orderedPopulation[index0];
+
 			return new Tuple<int, int>(parent1, parent2);
+		}
+
+		protected override int ProduceChild(Tuple<int, int> parents)
+		{
+			return ((parents.Item1 + parents.Item2) / 2);
 		}
 
 		public int GetParentIndex(int max)
 		{
-			return (int)Math.Floor(max - max * Math.Sqrt(_random.NextDouble()));			
-		}
-
-		public int ProduceChild(Tuple<int, int> parents)
-		{
-			return ((parents.Item1 + parents.Item2) / 2);
+			var parentIndex = (int) Math.Floor(max - max*Math.Sqrt(_random.NextDouble()));
+			return parentIndex == max ? max - 1: parentIndex;
 		}
 	}
 }

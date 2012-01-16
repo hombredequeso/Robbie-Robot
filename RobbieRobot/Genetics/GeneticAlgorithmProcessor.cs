@@ -5,12 +5,14 @@ namespace MRC.RobbieRobot.Genetics
 {
 	public class GeneticAlgorithmProcessor<T>
 	{
-		public GeneticAlgorithmProcessor(IGeneticProblem<T> problem)
+		public GeneticAlgorithmProcessor(IGeneticProblem<T> problem, IChildGenerator<T> childGenerator)
 		{
 			_problem = problem;
+			_childGenerator = childGenerator;
 		}
 
 		private readonly IGeneticProblem<T> _problem;
+		private readonly IChildGenerator<T> _childGenerator;
 
 		public IEnumerable<T> GetInitialPopulation(int populationSize)
 		{
@@ -25,8 +27,7 @@ namespace MRC.RobbieRobot.Genetics
 
 			var result = orderedPopulation
 				.AsParallel()
-				.Select(x => _problem.GetParents(orderedPopulation))
-				.Select(x => _problem.ProduceChild(x));
+				.Select(x => _childGenerator.GenerateChild(orderedPopulation));
 			return result;
 		}
 
@@ -35,8 +36,6 @@ namespace MRC.RobbieRobot.Genetics
 			var popAsPar = population.AsParallel();
 			popAsPar.ForAll(x => _problem.CalculateFitness(x));
 			return popAsPar.Select(x => _problem.GetFitness(x)).Average();
-
-			// return population.Select(x => _problem.CalculateFitness(x)).Average();
 		}
 	}
 }
