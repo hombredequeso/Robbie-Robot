@@ -6,6 +6,7 @@ namespace MRC.RobbieRobot.RobbieGame
 {
 	public class Robot: IBoardElement
 	{
+
 		private static Random random;
 
 		static Robot()
@@ -83,7 +84,7 @@ namespace MRC.RobbieRobot.RobbieGame
 						{
 							var randomDirection = (Board.Direction) random.Next(0, 4);
 							board.Move(this, randomDirection);
-							return ActionResult.PickedUpCan;
+							return ActionResult.SuccessfulMove;
 							break;
 						}
 					default:
@@ -124,7 +125,7 @@ namespace MRC.RobbieRobot.RobbieGame
 		private Situation.BoardContents GetContents(Point pos, Board board)
 		{
 			if (!board.PointInsidePlayArea(pos)) return Situation.BoardContents.wall;
-			if (board.Contents(pos).Any(x => x.GetType() == typeof(Rubbish))) return Situation.BoardContents.can;
+			if (board.Contents(pos).OfType<Rubbish>().Any()) return Situation.BoardContents.can;
 			return Situation.BoardContents.empty;
 		}
 	}

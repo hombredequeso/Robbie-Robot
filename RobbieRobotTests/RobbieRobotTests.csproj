@@ -58,6 +58,7 @@
     <Compile Include="RobbieGame\BoardTests.cs" />
     <Compile Include="RobbieGame\RobbieTests.cs" />
     <Compile Include="RobbieGame\ScoringTests.cs" />
+    <Compile Include="RobbieGame\StrategyGeneratorTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

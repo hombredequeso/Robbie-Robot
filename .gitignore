@@ -11,6 +11,8 @@ _ReSharper.*
 *.resharper
 *.suo
 *.cache
+*.TeamCity.user
+*.DotSettings.user
 
 NDependOut
 

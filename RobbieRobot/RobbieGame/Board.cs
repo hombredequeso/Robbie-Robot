@@ -19,7 +19,8 @@ namespace MRC.RobbieRobot.RobbieGame
 
 		public ICollection<IBoardElement> Contents(Point p)
 		{
-			return new Collection<IBoardElement>(_playArea[p.X, p.Y].ToList());
+			return _playArea[p.X, p.Y];
+			//return new Collection<IBoardElement>(_playArea[p.X, p.Y].ToList());
 		}
 
 		public Point GetCurrentPosition(IBoardElement element)
@@ -55,7 +56,27 @@ namespace MRC.RobbieRobot.RobbieGame
 		public void Move(IBoardElement boardElement, Direction direction)
 		{
 			var pos = _currentPositions[boardElement];
-			var newPosition = GetNewPosition[direction](pos);
+
+			int newX = pos.X;
+			int newY = pos.Y;
+			switch (direction)
+			{
+				case Direction.North:
+					newX++;
+					break;
+				case Direction.South:
+					newX--;
+					break;
+				case Direction.East:
+					newY++;
+					break;
+				case Direction.West:
+					newY--;
+					break;
+			}
+			var newPosition = new Point(newX, newY);
+
+			// var newPosition = GetNewPosition[direction](pos);
 			if (!PointInsidePlayArea(newPosition))
 				throw new InvalidMoveException();
 			RemoveElement(boardElement);
@@ -96,9 +117,9 @@ namespace MRC.RobbieRobot.RobbieGame
 	{
 	}
 
-	public struct Point : IEquatable<Point>
+	public class Point : IEquatable<Point>
 	{
-		public Point(int x, int y) : this()
+		public Point(int x, int y)
 		{
 			X = x;
 			Y = y;
@@ -145,5 +166,21 @@ namespace MRC.RobbieRobot.RobbieGame
 
 	public interface IBoardElement
 	{
+	}
+
+	public static class IdentityProvider
+	{
+		static IdentityProvider()
+		{
+			_currentId = Int32.MinValue;
+		}
+
+		public static int GetNextId()
+		{
+			++_currentId;
+			return _currentId;
+		}
+
+		private static int _currentId;
 	}
 }

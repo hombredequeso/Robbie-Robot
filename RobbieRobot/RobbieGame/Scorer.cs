@@ -12,10 +12,19 @@ namespace MRC.RobbieRobot.RobbieGame
 			          		{Robot.ActionResult.TriedToPickupCanWhereThereWasNoCan, -1},
 			          		{Robot.ActionResult.HitWall, -5},
 			          	};
+			_actionResultCount = new Dictionary<Robot.ActionResult, int>()
+			          	{
+			          		{Robot.ActionResult.SuccessfulMove, 0},
+			          		{Robot.ActionResult.HitWall, 0},
+			          		{Robot.ActionResult.PickedUpCan, 0},
+			          		{Robot.ActionResult.TriedToPickupCanWhereThereWasNoCan, 0},
+			          		{Robot.ActionResult.DidNothing, 0},
+			          	};
 		}
 
 		public int Score { get; private set; }
 		public IDictionary<Robot.ActionResult, int> _scores;
+		public IDictionary<Robot.ActionResult, int> _actionResultCount;
 
 		public void Add(Robot.ActionResult actionResult)
 		{

@@ -105,6 +105,21 @@ namespace MRC.RobbieRobotTests.RobbieGame
 			Assert.IsTrue(board.Contents(initialPos).Contains(robbie));
 		}
 
+		[Test]
+		public void Robbie_State_Change_Hash_Code_Remains_Constant()
+		{
+			IDictionary<Situation, RobotAction> strategy = GetSimpleStrategy(RobotAction.PickUpCan);
+			Scorer scorer = new Scorer();
+			Robot robbie = new Robot(strategy, scorer);
+			var startingHashCode = robbie.GetHashCode();
+
+			robbie._scorer.Add(Robot.ActionResult.HitWall);
+
+			var endingHashCode = robbie.GetHashCode();
+
+			Assert.AreEqual(startingHashCode, endingHashCode);
+		}
+
 
 		private IDictionary<Situation, RobotAction> GetSimpleStrategy(RobotAction robotAction)
 		{

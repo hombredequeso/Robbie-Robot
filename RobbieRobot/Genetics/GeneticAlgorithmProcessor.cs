@@ -22,7 +22,9 @@ namespace MRC.RobbieRobot.Genetics
 			var orderedPopulation = initialPopulation
 				.OrderBy(x => _problem.GetFitness(x))
 				.ToArray();
-			var result = orderedPopulation.AsParallel()
+
+			var result = orderedPopulation
+				.AsParallel()
 				.Select(x => _problem.GetParents(orderedPopulation))
 				.Select(x => _problem.ProduceChild(x));
 			return result;
@@ -33,6 +35,8 @@ namespace MRC.RobbieRobot.Genetics
 			var popAsPar = population.AsParallel();
 			popAsPar.ForAll(x => _problem.CalculateFitness(x));
 			return popAsPar.Select(x => _problem.GetFitness(x)).Average();
+
+			// return population.Select(x => _problem.CalculateFitness(x)).Average();
 		}
 	}
 }

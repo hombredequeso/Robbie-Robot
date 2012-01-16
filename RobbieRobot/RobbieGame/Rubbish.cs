@@ -1,6 +1,6 @@
 namespace MRC.RobbieRobot.RobbieGame
 {
-	public class Rubbish: IBoardElement
+	public class Rubbish : IBoardElement
 	{
 	}
 }

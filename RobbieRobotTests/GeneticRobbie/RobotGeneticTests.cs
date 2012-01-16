@@ -78,21 +78,37 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 		}
 
 		[Test]
+		public void GetParentIndex_IsEvenly_Distributed()
+		{
+			int populationSize = 10;
+			int[] indexSelectionCount = new int[populationSize * 3];
+			for (int i = 0; i < 10000; i++)
+				indexSelectionCount[RobotGeneticProblem.GetParentIndex(populationSize)]++;
+			for (int c = 0; c < populationSize * 3; c++)
+			{
+				Debug.WriteLine("{0}: {1}", c, indexSelectionCount[c]);
+			}
+		}
+
+
+		[Test]
 		public void Can_Run_Robots_Through_Genetic_Processor()
 		{
 			RobotGeneticProblem robotGeneticProblem = new RobotGeneticProblem();
 			GeneticAlgorithmProcessor<Robot> processor = new GeneticAlgorithmProcessor<Robot>(robotGeneticProblem);
 
-			const int populationSize = 500;
+			const int populationSize = 200;
 			var population = processor.GetInitialPopulation(populationSize).ToArray();
 			var initialFitness = processor.CalculatePopulationFitness(population);
 			Debug.Print("Initial Fitness: {0}", initialFitness);
 
-			for (int i = 0; i < 1000; i++)
+			for (int i = 0; i < 2000; i++)
 			{
 				population = processor.GetNextPopulation(population).ToArray();
 				var nextFitness = processor.CalculatePopulationFitness(population);
-				Debug.Print("Iteration {0}: {1}", i, nextFitness);
+				var maxFitness = population.Max(x => robotGeneticProblem.GetFitness(x));
+
+				Debug.Print("Iteration {0}: avg = {1}, max = {2}", i, nextFitness, maxFitness);
 			}
 		}
 	}
@@ -112,24 +128,29 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 				.Select((x, i) => new Robot(StrategyGenerator.Random(), new Scorer()));
 		}
 
+		private const int BoardCountToCalculateFitness = 15;
+
 		public double CalculateFitness(Robot robot)
 		{
-			Board b = new Board(10, 10);
-			var litterer = new BoardLitterer(0.5);
-			litterer.Litter(b);
-			b.AddElement(robot, new Point(0, 0));
-
-			const int numberOfTurns = 200;
-			for (int i = 0; i < numberOfTurns; i++)
+			for (int boardsToTest = 0; boardsToTest < BoardCountToCalculateFitness; boardsToTest++)
 			{
-				robot.Act(b);
+				Board b = new Board(10, 10);
+				var litterer = new BoardLitterer(0.5);
+				litterer.Litter(b);
+				b.AddElement(robot, new Point(0, 0));
+
+				const int numberOfTurns = 200;
+				for (int i = 0; i < numberOfTurns; i++)
+				{
+					robot.Act(b);
+				}
 			}
-			return robot._scorer.Score;
+			return (double)robot._scorer.Score / BoardCountToCalculateFitness;
 		}
 
 		public double GetFitness(Robot item)
 		{
-			return item._scorer.Score;
+			return (double)item._scorer.Score / BoardCountToCalculateFitness;
 		}
 
 		public Tuple<Robot, Robot> GetParents(IEnumerable<Robot> orderedPopulation)
@@ -142,9 +163,12 @@ namespace MRC.RobbieRobotTests.GeneticRobbie
 			return new Tuple<Robot, Robot>(parent1, parent2);
 		}
 
-		public int GetParentIndex(int max)
+		public static int GetParentIndex(int max)
 		{
-			return (int)Math.Floor(max * Math.Sqrt(_random.NextDouble()));
+			//return (int)Math.Floor(max * Math.Sqrt(_random.NextDouble()));
+			//return  (int)Math.Floor(Math.Sqrt(_random.NextDouble() * 3)/Math.Sqrt(3)*max);
+			//return (int) Math.Floor(Math.Pow(3.0*_random.NextDouble(), 1.0/3)/Math.Pow(3.0, 1.0/3)*max);
+			return (int) Math.Floor(Math.Pow(4.0*_random.NextDouble(), 1.0/4)/Math.Pow(4.0, 1.0/4)*max);
 		}
 
 
